@@ -1,22 +1,31 @@
-# blue-notes — Leonardo Nanni
-Obiettivo: diventare **Junior SOC Analyst (Blue Team)** su ambiente Windows. Qui raccolgo lab, query e playbook.
+# SOC Lab Journey
 
-## Stack del lab (inizio)
-- Windows Event Log (Security)
-- Sysmon (in arrivo) → ProcessCreate (ID 1), NetworkConnect (ID 3), DnsQuery (ID 22)
-- (Prossimo step: Wazuh come SIEM)
+Questo repo documenta il mio percorso pratico verso il ruolo di **SOC Analyst (Blue Team)**.  
+Ogni giorno aggiungo evidenze reali dal mio lab in VM, con spiegazioni e playbook di analisi.
 
-## Evidenze — Day 1
-- Event ID **4625** (Logon fallito, ultime 24h): **__N4625__**
+---
 
-## Query iniziali
-- Windows Security 4625 (conteggio ultime 24h)
-- Sysmon – PowerShell eseguito (ID 1) *(in arrivo)*
-- Sysmon – DNS verso TLD insoliti (ID 22) *(in arrivo)*
+## 📅 Giorni di evidenze
 
-## Playbook
-- Phishing — triage iniziale (v1.0)
+### 🔹 Day 1
+- **Event ID 4625 (Failed Logon)**  
+  - Count (last 24h): **2**  
+  - Why it matters: utile per individuare brute-force o password spraying.  
+  - Fields to check: `AccountName`, `LogonType` (2/3/10), `Source Network Address (IP)`.
 
-## Prossimi passi
-- Installare Sysmon e salvare 2–3 eventi d’esempio
-- Aggiungere 2 detection con spiegazione e falsi positivi
+---
+
+### 🔹 Day 2
+- **Sysmon ID 1 — ProcessCreate (PowerShell, 24h): N_PS**  
+  - Why it matters: molte campagne automatizzano download/esecuzioni via PowerShell (LoLBins).  
+  - Check: `CommandLine`, `ParentImage`, utente.  
+
+- **Sysmon ID 22 — DnsQuery (TLD insoliti, 24h): N_DNS**  
+  - Why it matters: possibile indicatore di C2 o domini maliziosi.  
+  - Check: `QueryName`, processo chiamante (`Image`), utente.  
+
+#### 🛡️ Mini scenario (Word → PowerShell → DNS sospetto)
+- `WINWORD.EXE` apre `POWERSHELL.EXE` (Sysmon ID 1).  
+- PowerShell fa query DNS verso `ajd92jd92.top` (Sysmon ID 22).  
+- In parallelo l’attaccante prova login forzati (4625).  
+- Possibile attacco: **Phishing con macro + brute force + C2 communication**.
